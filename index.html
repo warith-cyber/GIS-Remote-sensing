@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A GIS StoryMap exploring IoT air pollution sensor placement for vulnerable populations in Klang, Malaysia."
+    />
+    <meta name="theme-color" content="#111815" />
+    <title>Breathing Klang | GIS StoryMap</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#introduction">Skip to story</a>
+
+    <header class="site-header" id="site-header">
+      <a class="brand" href="#hero" aria-label="Breathing Klang home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Breathing Klang</span>
+      </a>
+      <nav class="chapter-nav" aria-label="Story chapters">
+        <a href="#study-area">Place</a>
+        <a href="#methodology">Method</a>
+        <a href="#results">Results</a>
+        <a href="#conclusion">Outlook</a>
+      </nav>
+      <div class="header-actions">
+        <span class="chapter-counter"><b id="current-chapter">01</b> / 09</span>
+        <button class="icon-button" id="theme-toggle" type="button" aria-label="Switch to light theme" title="Toggle theme">
+          <svg class="icon icon-sun" aria-hidden="true"><use href="#icon-sun"></use></svg>
+          <svg class="icon icon-moon" aria-hidden="true"><use href="#icon-moon"></use></svg>
+        </button>
+        <button class="icon-button menu-button" id="menu-toggle" type="button" aria-label="Open chapter menu" aria-expanded="false" title="Chapters">
+          <svg class="icon" aria-hidden="true"><use href="#icon-menu"></use></svg>
+        </button>
+      </div>
+    </header>
+
+    <aside class="mobile-menu" id="mobile-menu" aria-label="Mobile chapter menu">
+      <a href="#introduction"><span>01</span>Introduction</a>
+      <a href="#study-area"><span>02</span>Study area</a>
+      <a href="#methodology"><span>03</span>Methodology</a>
+      <a href="#causal"><span>04</span>Causal factors</a>
+      <a href="#impact"><span>05</span>Vulnerability</a>
+      <a href="#results"><span>06</span>Suitability</a>
+      <a href="#discussion"><span>07</span>Discussion</a>
+      <a href="#conclusion"><span>08</span>Conclusion</a>
+    </aside>
+
+    <main>
+      <section class="hero story-section" id="hero" data-chapter="01" aria-labelledby="hero-title">
+        <div class="hero-media" aria-hidden="true"></div>
+        <div class="hero-grid" aria-hidden="true"></div>
+        <div class="sensor-pulse pulse-one" aria-hidden="true"></div>
+        <div class="sensor-pulse pulse-two" aria-hidden="true"></div>
+        <div class="hero-content reveal">
+          <p class="eyebrow"><span>GIS StoryMap</span> Klang, Selangor</p>
+          <h1 id="hero-title">Finding where clean-air intelligence matters most.</h1>
+          <p class="hero-summary">
+            IoT air pollution sensor placement for vulnerable populations using
+            GIS-based Multi-Criteria Decision Making.
+          </p>
+          <a class="primary-button" href="#introduction">
+            Explore study
+            <svg class="icon" aria-hidden="true"><use href="#icon-arrow-down"></use></svg>
+          </a>
+        </div>
+        <div class="hero-meta reveal">
+          <div><span>Model</span><strong>Two-stage MCDM</strong></div>
+          <div><span>Method</span><strong>Weighted Linear Combination</strong></div>
+          <div><span>Output</span><strong>Sensor suitability surface</strong></div>
+        </div>
+        <a class="scroll-cue" href="#introduction" aria-label="Scroll to introduction">
+          <span>Scroll to begin</span>
+          <svg class="icon" aria-hidden="true"><use href="#icon-arrow-down"></use></svg>
+        </a>
+      </section>
+
+      <section class="chapter story-section intro-section" id="introduction" data-chapter="02" aria-labelledby="intro-title">
+        <div class="chapter-heading reveal">
+          <p class="section-label">01 / The challenge</p>
+          <h2 id="intro-title">Air risk is not distributed equally.</h2>
+          <p class="lead">
+            Klang's industrial economy and dense transport network sit beside homes,
+            schools, hospitals and public spaces. City-wide averages can hide the
+            neighbourhoods where exposure and vulnerability overlap.
+          </p>
+        </div>
+        <div class="problem-grid">
+          <article class="insight reveal">
+            <span class="insight-number">01</span>
+            <svg class="feature-icon" aria-hidden="true"><use href="#icon-wind"></use></svg>
+            <h3>Urban exposure</h3>
+            <p>Road traffic, industrial activity and freight movement create spatially uneven pollution pressures.</p>
+          </article>
+          <article class="insight reveal">
+            <span class="insight-number">02</span>
+            <svg class="feature-icon" aria-hidden="true"><use href="#icon-people"></use></svg>
+            <h3>Human vulnerability</h3>
+            <p>Children, patients and residents require closer attention where sensitive land uses cluster.</p>
+          </article>
+          <article class="insight reveal">
+            <span class="insight-number">03</span>
+            <svg class="feature-icon" aria-hidden="true"><use href="#icon-sensor"></use></svg>
+            <h3>Smarter sensing</h3>
+            <p>Low-cost IoT nodes can fill monitoring gaps when they are placed by evidence, not convenience.</p>
+          </article>
+        </div>
+        <blockquote class="pull-quote reveal">
+          <span>Design question</span>
+          <p>Where should sensors go to observe both the causes of pollution and its greatest human consequences?</p>
+        </blockquote>
+      </section>
+
+      <section class="map-story story-section" id="study-area" data-chapter="03" aria-labelledby="study-title">
+        <div class="map-copy reveal">
+          <p class="section-label">02 / Study area</p>
+          <h2 id="study-title">Klang: port city, urban corridor, living community.</h2>
+          <p>
+            The study area follows the urbanised Klang district around the Klang River
+            and Port Klang. Major roads connect logistics and industrial zones to dense
+            residential districts, producing a complex exposure landscape.
+          </p>
+          <dl class="location-facts">
+            <div><dt>Centre</dt><dd>3.0449° N, 101.4456° E</dd></div>
+            <div><dt>Urban form</dt><dd>Port-industrial and residential</dd></div>
+            <div><dt>Analysis focus</dt><dd>Exposure-vulnerability overlap</dd></div>
+          </dl>
+          <p class="map-instruction"><svg class="icon" aria-hidden="true"><use href="#icon-mouse"></use></svg> Pan, zoom and hover over the study boundary.</p>
+        </div>
+        <div class="map-stage reveal">
+          <div class="map-toolbar">
+            <span class="live-dot">Interactive map</span>
+            <button class="map-reset" type="button" data-map="study-map" title="Reset map view">
+              <svg class="icon" aria-hidden="true"><use href="#icon-focus"></use></svg>
+              <span>Reset</span>
+            </button>
+          </div>
+          <div class="map" id="study-map" aria-label="Interactive map of the Klang study area"></div>
+          <div class="map-caption"><span>Study extent</span><strong>Klang District, Selangor</strong></div>
+        </div>
+      </section>
+
+      <section class="chapter methodology story-section" id="methodology" data-chapter="04" aria-labelledby="method-title">
+        <div class="chapter-heading reveal">
+          <p class="section-label">03 / Methodology</p>
+          <h2 id="method-title">Two evidence streams, one placement decision.</h2>
+          <p class="lead">A transparent, repeatable GIS workflow converts diverse vector layers into aligned scores before combining pollution pressure with human vulnerability.</p>
+        </div>
+
+        <div class="model-diagram reveal" role="img" aria-label="Flow diagram from causal and impact factors through raster processing to weighted suitability">
+          <div class="model-branch causal-branch">
+            <span class="model-index">A</span>
+            <div><small>Stage one</small><h3>Causal pressure</h3><p>Roads · industry · transport</p></div>
+          </div>
+          <div class="model-branch impact-branch">
+            <span class="model-index">B</span>
+            <div><small>Stage two</small><h3>Human impact</h3><p>Hospitals · schools · homes</p></div>
+          </div>
+          <div class="diagram-connector"><span></span><b>Aligned rasters</b><span></span></div>
+          <div class="model-output">
+            <svg class="feature-icon" aria-hidden="true"><use href="#icon-layers"></use></svg>
+            <div><small>WLC overlay</small><h3>Final suitability</h3><p>Priority locations for IoT sensors</p></div>
+          </div>
+        </div>
+
+        <ol class="process-steps">
+          <li class="reveal"><span>01</span><div><h3>Score</h3><p>Use the Field Calculator to standardise every criterion on a 1–5 scale.</p></div></li>
+          <li class="reveal"><span>02</span><div><h3>Rasterise</h3><p>Convert vector criteria into continuous analysis surfaces at a common cell size.</p></div></li>
+          <li class="reveal"><span>03</span><div><h3>Align</h3><p>Match coordinate system, extent, origin and resolution across all rasters.</p></div></li>
+          <li class="reveal"><span>04</span><div><h3>Combine</h3><p>Apply weights in Raster Calculator and classify the resulting priority surface.</p></div></li>
+        </ol>
+
+        <div class="formula-band reveal">
+          <div><span>Weighted Linear Combination</span><p>Weights can be tuned to reflect policy priorities while retaining a clear, auditable model.</p></div>
+          <div class="formula"><i>Final Score</i><b>=</b><strong>α</strong><span>(Causal)</span><b>+</b><strong>β</strong><span>(Impact)</span></div>
+          <div class="weight-demo" aria-label="Example model weights"><span>Example scenario</span><b>α 0.50</b><b>β 0.50</b></div>
+        </div>
+      </section>
+
+      <section class="factor-section causal story-section" id="causal" data-chapter="05" aria-labelledby="causal-title">
+        <div class="factor-copy reveal">
+          <p class="section-label">04 / Causal surface</p>
+          <h2 id="causal-title">Where pollution pressure originates.</h2>
+          <p>Higher scores follow major transport corridors, industrial concentrations and freight infrastructure. Overlap between sources intensifies the causal surface.</p>
+          <div class="factor-list">
+            <button class="factor-item active" type="button" data-focus-layer="majorRoads" data-map-target="causal-map"><span class="swatch road"></span><span><b>Primary roads</b><small>High traffic and freight volume · score 5</small></span></button>
+            <button class="factor-item" type="button" data-focus-layer="secondaryRoads" data-map-target="causal-map"><span class="swatch road-secondary"></span><span><b>Secondary roads</b><small>Local traffic pressure · score 3</small></span></button>
+            <button class="factor-item" type="button" data-focus-layer="industry" data-map-target="causal-map"><span class="swatch industry"></span><span><b>Industrial zones</b><small>Stationary emission potential · score 5</small></span></button>
+            <button class="factor-item" type="button" data-focus-layer="transport" data-map-target="causal-map"><span class="swatch transport"></span><span><b>Transport nodes</b><small>Port and terminal activity · score 4</small></span></button>
+          </div>
+        </div>
+        <div class="factor-map-wrap reveal">
+          <div class="map-toolbar"><span class="live-dot red">Causal layer</span><span class="raster-status" data-raster="causal">Illustrative surface</span></div>
+          <div class="map large-map" id="causal-map" aria-label="Interactive causal factors map"></div>
+          <div class="map-legend heat-legend"><span>Lower pressure</span><i></i><span>Higher pressure</span></div>
+        </div>
+      </section>
+
+      <section class="factor-section impact story-section" id="impact" data-chapter="06" aria-labelledby="impact-title">
+        <div class="factor-map-wrap reveal">
+          <div class="map-toolbar"><span class="live-dot orange">Impact layer</span><span class="raster-status" data-raster="impact">Illustrative surface</span></div>
+          <div class="map large-map" id="impact-map" aria-label="Interactive social vulnerability map"></div>
+          <div class="map-legend impact-legend"><span class="dot hospital"></span>Hospital <span class="dot school"></span>School <span class="dot home"></span>Residential <span class="dot park"></span>Park buffer</div>
+        </div>
+        <div class="factor-copy reveal">
+          <p class="section-label">05 / Impact surface</p>
+          <h2 id="impact-title">Who is most affected.</h2>
+          <p>Vulnerability rises around healthcare, education and residential land uses. Parks receive a lower score, acting as lower-exposure buffers within the model.</p>
+          <div class="vulnerability-scale">
+            <div><span>5</span><b>Very high</b><p>Hospitals and immediate surroundings</p></div>
+            <div><span>4</span><b>High</b><p>Schools and dense residential areas</p></div>
+            <div><span>2</span><b>Lower</b><p>Parks and open-space buffers</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="results story-section" id="results" data-chapter="07" aria-labelledby="results-title">
+        <div class="results-heading reveal">
+          <p class="section-label">06 / Main result</p>
+          <h2 id="results-title">A priority surface for cleaner decisions.</h2>
+          <p>Compare the two input surfaces with the final WLC result. High-suitability cells indicate where strong pollution pressure intersects with vulnerable populations.</p>
+        </div>
+
+        <div class="result-explorer reveal">
+          <div class="result-controls" role="group" aria-label="Choose map layer">
+            <button type="button" data-result-layer="causal"><span class="control-index">A</span><span><b>Causal</b><small>Source pressure</small></span></button>
+            <button type="button" data-result-layer="impact"><span class="control-index">B</span><span><b>Impact</b><small>Vulnerability</small></span></button>
+            <button class="active" type="button" data-result-layer="final"><span class="control-index">A+B</span><span><b>Suitability</b><small>Combined WLC</small></span></button>
+          </div>
+          <div class="result-map-frame">
+            <div class="map-toolbar"><span class="live-dot red">Priority surface</span><span class="raster-status" data-raster="final">Illustrative surface</span></div>
+            <div class="map result-map" id="result-map" aria-label="Interactive final sensor suitability map"></div>
+            <div class="suitability-legend" aria-label="Suitability legend">
+              <strong>Sensor suitability</strong>
+              <span><i class="high"></i>High · priority placement</span>
+              <span><i class="medium"></i>Medium · supporting coverage</span>
+              <span><i class="low"></i>Low · lower priority</span>
+            </div>
+          </div>
+          <aside class="result-note">
+            <span class="result-number">01</span>
+            <h3>Place sensors at intersections of risk.</h3>
+            <p>Priority zones are not simply the most polluted locations. They are places where likely emissions and sensitive populations coincide.</p>
+            <div class="placement-stat"><span>Selection rule</span><strong>Top suitability class</strong><small>Then review access, power and network coverage in the field.</small></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="chapter discussion story-section" id="discussion" data-chapter="08" aria-labelledby="discussion-title">
+        <div class="chapter-heading reveal">
+          <p class="section-label">07 / Discussion</p>
+          <h2 id="discussion-title">What the spatial pattern tells us.</h2>
+        </div>
+        <div class="discussion-grid">
+          <article class="finding reveal"><span>01</span><h3>Corridor effects</h3><p>Continuous road and freight corridors can create connected exposure zones rather than isolated hotspots.</p></article>
+          <article class="finding reveal"><span>02</span><h3>Vulnerability changes priority</h3><p>A moderate source score can become a high monitoring priority when hospitals, schools or dense housing are nearby.</p></article>
+          <article class="finding reveal"><span>03</span><h3>A network, not a single point</h3><p>High-ranked sites support targeted nodes, while medium-ranked sites provide background context and spatial continuity.</p></article>
+        </div>
+        <div class="discussion-callout reveal">
+          <svg class="feature-icon" aria-hidden="true"><use href="#icon-compass"></use></svg>
+          <div><span>Planning principle</span><p>Optimise for explanatory coverage: sensors should capture gradients between source-dominated, population-dominated and background environments.</p></div>
+        </div>
+      </section>
+
+      <section class="conclusion story-section" id="conclusion" data-chapter="09" aria-labelledby="conclusion-title">
+        <div class="conclusion-inner reveal">
+          <p class="section-label">08 / Conclusion</p>
+          <h2 id="conclusion-title">From spatial evidence to an accountable monitoring network.</h2>
+          <p>GIS-based MCDM provides a defensible way to prioritise scarce IoT sensors in Klang. By balancing emission sources with vulnerable populations, the model directs monitoring toward places where better information can support better public-health decisions.</p>
+          <div class="recommendation">
+            <span>Recommendation</span>
+            <p>Deploy an initial sensor network across high-suitability zones, validate conditions through field surveys, then adapt weights and locations using observed air-quality data.</p>
+          </div>
+        </div>
+        <footer>
+          <span>University GIS Project · Klang, Malaysia</span>
+          <a href="#hero">Back to top <svg class="icon" aria-hidden="true"><use href="#icon-arrow-up"></use></svg></a>
+        </footer>
+      </section>
+    </main>
+
+    <svg class="svg-defs" aria-hidden="true">
+      <symbol id="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></symbol>
+      <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></symbol>
+      <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+      <symbol id="icon-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></symbol>
+      <symbol id="icon-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+      <symbol id="icon-wind" viewBox="0 0 24 24"><path d="M3 8h10a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h7"/></symbol>
+      <symbol id="icon-people" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+      <symbol id="icon-sensor" viewBox="0 0 24 24"><path d="M12 18v4M8 22h8M12 2a6 6 0 0 0-3.75 10.68A4 4 0 0 1 10 16h4a4 4 0 0 1 1.75-3.32A6 6 0 0 0 12 2Z"/><path d="M8.5 7.5a4 4 0 0 1 7 0"/></symbol>
+      <symbol id="icon-mouse" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="7"/><path d="M12 6v4"/></symbol>
+      <symbol id="icon-focus" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="icon-layers" viewBox="0 0 24 24"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/></symbol>
+      <symbol id="icon-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 8-2.5 5.5L8 16l2.5-5.5L16 8Z"/></symbol>
+    </svg>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/georaster@1.6.0/dist/georaster.browser.bundle.min.js"></script>
+    <script src="https://unpkg.com/georaster-layer-for-leaflet@3.10.0/dist/georaster-layer-for-leaflet.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
