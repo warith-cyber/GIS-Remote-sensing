@@ -1,51 +1,158 @@
 const KLANG_CENTER = [3.0449, 101.4456];
 const KLANG_ZOOM = 11;
+const EPSG3380 =
+  "+proj=cass +lat_0=3.68464905 +lon_0=101.389107913889 +x_0=-34836.161 +y_0=56464.049 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs";
 
-const demoData = {
-  boundary: {
-    type: "Feature",
-    properties: { name: "Klang study boundary" },
-    geometry: {
-      type: "Polygon",
-      coordinates: [[[101.302, 3.165], [101.56, 3.17], [101.592, 3.083], [101.563, 2.955], [101.455, 2.91], [101.337, 2.934], [101.272, 3.03], [101.302, 3.165]]]
-    }
-  },
-  roads: [
-    [[3.157, 101.38], [3.104, 101.405], [3.044, 101.445], [2.986, 101.488], [2.943, 101.535]],
-    [[3.096, 101.31], [3.075, 101.37], [3.047, 101.445], [3.026, 101.536]],
-    [[2.985, 101.324], [3.018, 101.387], [3.063, 101.475], [3.103, 101.56]]
-  ],
-  secondaryRoads: [
-    [[3.13,101.335],[3.09,101.46],[3.12,101.55]],
-    [[2.95,101.37],[3.02,101.42],[3.08,101.51]],
-    [[3.04,101.33],[3.00,101.46],[2.97,101.54]]
-  ],
-  industry: [
-    [[101.31,3.028],[101.377,3.041],[101.397,2.989],[101.329,2.969]],
-    [[101.453,3.083],[101.514,3.099],[101.535,3.054],[101.474,3.034]],
-    [[101.365,3.131],[101.418,3.139],[101.431,3.101],[101.38,3.09]]
-  ],
-  transport: [[3.005,101.349,"Port Klang"],[3.026,101.384,"Freight terminal"],[3.064,101.454,"Klang station"],[3.09,101.54,"Logistics hub"]],
-  hospitals: [[3.043,101.445,"Hospital Tengku Ampuan Rahimah"],[3.084,101.43,"Hospital district cluster"],[2.999,101.426,"Community clinic"]],
-  schools: [[3.07,101.458,"School cluster"],[3.027,101.473,"School cluster"],[3.102,101.401,"School cluster"],[2.976,101.506,"School cluster"]],
-  residential: [[3.058,101.48,"Central Klang residences"],[3.105,101.45,"North Klang residences"],[3.011,101.525,"South-east residences"],[3.025,101.402,"Port-side residences"]],
-  parks: [[3.072,101.425,"Urban park"],[3.014,101.462,"Open-space buffer"]],
-  hotspots: {
-    causal: [[3.025,101.37,2700],[3.067,101.475,2500],[3.105,101.405,2100],[3.005,101.49,1900]],
-    impact: [[3.045,101.447,2400],[3.075,101.463,2100],[3.02,101.51,2300],[3.102,101.42,1900]],
-    final: [[3.04,101.43,1900],[3.064,101.476,1700],[3.018,101.505,1750],[3.094,101.418,1450]]
-  }
+const dataPaths = {
+  boundary: "map/Geojson/klang base.geojson",
+  hospitals: "map/Geojson/hopital.geojson",
+  schools: "map/Geojson/School.geojson",
+  roadsSub1: "map/Geojson/roads sub1.geojson",
+  roadsSub2: "map/Geojson/roads_sub2.geojson",
+  industrySub1: "map/Geojson/Industrial sub1.geojson",
+  industrySub2: "map/Geojson/Industrial sub2.geojson",
+  sensors: "map/Geojson/IOT Sensor.geojson",
+  sensorBuffers: "map/Geojson/IOT sensor buffered.geojson"
 };
 
 const rasterConfig = {
-  causal: { file: "causal_raster.tif", colors: ["#f4d35e", "#ef8b50", "#d83b39"] },
-  impact: { file: "impact_raster.tif", colors: ["#82c5a5", "#f2b45d", "#e7604e"] },
-  final: { file: "final_suitability.tif", colors: ["#65a98c", "#f0ad52", "#d83b39"] }
+  final: {
+    file: "map/Geotiff/Peta_Akhir_Scenario_2_Betul.tif",
+    label: "Final suitability GeoTIFF"
+  }
 };
 
 const maps = {};
 const layerRegistry = {};
+const dataCache = new Map();
+const projectedDataCache = new Map();
+let studyBounds = null;
 let resultActiveLayer = "final";
+
+function defineProjection() {
+  if (typeof proj4 !== "undefined") {
+    proj4.defs("EPSG:3380", EPSG3380);
+  }
+}
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function sourceToLatLng(x, y) {
+  if (typeof proj4 === "undefined") return [y, x];
+  const [lng, lat] = proj4("EPSG:3380", "EPSG:4326", [x, y]);
+  return [lat, lng];
+}
+
+function transformCoordinates(coordinates) {
+  if (!Array.isArray(coordinates)) return coordinates;
+  if (typeof coordinates[0] === "number" && typeof coordinates[1] === "number") {
+    const [lat, lng] = sourceToLatLng(coordinates[0], coordinates[1]);
+    const next = [lng, lat];
+    if (coordinates.length > 2) next.push(...coordinates.slice(2));
+    return next;
+  }
+  return coordinates.map(transformCoordinates);
+}
+
+function transformGeometry(geometry) {
+  if (!geometry) return geometry;
+  if (geometry.type === "GeometryCollection") {
+    return {
+      ...geometry,
+      geometries: geometry.geometries.map(transformGeometry)
+    };
+  }
+  return {
+    ...geometry,
+    coordinates: transformCoordinates(geometry.coordinates)
+  };
+}
+
+function transformGeoJson(source) {
+  const geojson = clone(source);
+  delete geojson.crs;
+  delete geojson.bbox;
+
+  if (geojson.type === "FeatureCollection") {
+    geojson.features = geojson.features.map((feature) => ({
+      ...feature,
+      geometry: transformGeometry(feature.geometry)
+    }));
+  } else if (geojson.type === "Feature") {
+    geojson.geometry = transformGeometry(geojson.geometry);
+  } else if (geojson.coordinates) {
+    geojson.coordinates = transformCoordinates(geojson.coordinates);
+  }
+
+  return geojson;
+}
+
+async function fetchGeoJson(path) {
+  if (!dataCache.has(path)) {
+    dataCache.set(path, fetch(path, { cache: "no-store" }).then((response) => {
+      if (!response.ok) throw new Error(`Could not load ${path}`);
+      return response.json();
+    }));
+  }
+  return dataCache.get(path);
+}
+
+async function loadProjectedGeoJson(path, options = {}) {
+  if (!projectedDataCache.has(path)) {
+    projectedDataCache.set(path, fetchGeoJson(path).then(transformGeoJson));
+  }
+  const projected = await projectedDataCache.get(path);
+  return L.geoJSON(projected, {
+    ...options,
+    renderer: L.canvas({ tolerance: 0.8 })
+  });
+}
+
+function firstValue(properties, keys) {
+  if (!properties) return "";
+  for (const key of keys) {
+    const value = properties[key];
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      return String(value);
+    }
+  }
+  return "";
+}
+
+function featureTitle(feature, fallback) {
+  const properties = feature?.properties || {};
+  return firstValue(properties, [
+    "name",
+    "official_n",
+    "official_name",
+    "amenity",
+    "highway",
+    "adm2_name",
+    "id",
+    "fid",
+    "osm_id"
+  ]) || fallback;
+}
+
+function bindTooltip(layer, feature, title, description) {
+  const label = featureTitle(feature, title);
+  layer.bindTooltip(`<b>${label}</b><br>${description}`, { sticky: true });
+}
+
+function createPointLayer(color, radius, title, description) {
+  return {
+    pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
+      radius,
+      color: "#ffffff",
+      weight: 1.5,
+      fillColor: color,
+      fillOpacity: 0.96
+    }),
+    onEachFeature: (feature, layer) => bindTooltip(layer, feature, title, description)
+  };
+}
 
 function createBaseMap(id, options = {}) {
   const map = L.map(id, {
@@ -56,228 +163,384 @@ function createBaseMap(id, options = {}) {
     preferCanvas: true,
     ...options
   });
+
   L.control.zoom({ position: "bottomright" }).addTo(map);
   L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-    attribution: "&copy; OpenStreetMap &copy; CARTO",
+    attribution: "&copy; OpenStreetMap &copy; CARTO | source layers EPSG:3380",
     subdomains: "abcd",
     maxZoom: 19
   }).addTo(map);
+
   map.on("focus", () => map.scrollWheelZoom.enable());
   map.on("blur", () => map.scrollWheelZoom.disable());
   return map;
 }
 
-function addBoundary(map, fill = false) {
-  return L.geoJSON(demoData.boundary, {
+async function addBoundary(map, fill = false) {
+  const boundary = await loadProjectedGeoJson(dataPaths.boundary, {
     style: {
       color: "#2f7150",
       weight: 2,
       opacity: 0.95,
       fillColor: "#8bc99d",
-      fillOpacity: fill ? 0.1 : 0.03,
+      fillOpacity: fill ? 0.1 : 0.035,
       dashArray: "7 7"
-    }
-  }).bindTooltip("Klang study boundary", { sticky: true }).addTo(map);
+    },
+    onEachFeature: (feature, layer) => bindTooltip(
+      layer,
+      feature,
+      "Klang District",
+      "Administrative study boundary. Source CRS: EPSG:3380."
+    )
+  });
+  boundary.addTo(map);
+  if (!studyBounds) studyBounds = boundary.getBounds();
+  return boundary;
 }
 
-function addCausalLayers(map, includeLabels = true) {
-  const group = L.layerGroup().addTo(map);
-  const majorRoads = L.layerGroup();
-  demoData.roads.forEach((line, index) => {
-    L.polyline(line, { color: "#d83b39", weight: 4, opacity: 0.85 })
-      .bindTooltip(`Primary road ${index + 1}: high traffic pressure`, { sticky: true })
-      .addTo(majorRoads);
+async function addCausalLayers(map, includeControl = true, visible = true, config = {}) {
+  const includeParcels = config.includeParcels !== false;
+  const includeRoads = config.includeRoads !== false;
+  const group = L.layerGroup();
+  if (visible) group.addTo(map);
+
+  const highwayBuffer = await loadProjectedGeoJson(dataPaths.roadsSub1, {
+    style: {
+      color: "#d83b39",
+      weight: 13,
+      opacity: 0.16,
+      lineCap: "round"
+    },
+    onEachFeature: (feature, layer) => bindTooltip(
+      layer,
+      feature,
+      "Major road or highway",
+      "High-weight causal layer: 40 percent in the report model."
+    )
   });
-  majorRoads.addTo(group);
 
-  const secondaryRoads = L.layerGroup();
-  demoData.secondaryRoads.forEach((line) => {
-    L.polyline(line, { color: "#e8a64d", weight: 2, opacity: 0.75 })
-      .bindTooltip("Secondary road: moderate traffic pressure", { sticky: true })
-      .addTo(secondaryRoads);
+  const highways = await loadProjectedGeoJson(dataPaths.roadsSub1, {
+    style: {
+      color: "#d83b39",
+      weight: 3.2,
+      opacity: 0.86,
+      lineCap: "round"
+    },
+    onEachFeature: (feature, layer) => bindTooltip(
+      layer,
+      feature,
+      "Major road or highway",
+      "High traffic and logistics emission corridor."
+    )
   });
-  secondaryRoads.addTo(group);
 
-  const industry = L.layerGroup();
-  demoData.industry.forEach((coordinates, index) => {
-    L.polygon(coordinates.map(([lng, lat]) => [lat, lng]), { color: "#c93e3b", fillColor: "#e8534f", fillOpacity: 0.33, weight: 1.5 })
-      .bindTooltip(`Industrial zone ${index + 1}: high source score`, { sticky: true })
-      .addTo(industry);
-  });
-  industry.addTo(group);
-
-  const transport = L.layerGroup();
-  demoData.transport.forEach(([lat, lng, name]) => {
-    L.circleMarker([lat, lng], { radius: 6, color: "#126b70", fillColor: "#64c6c4", fillOpacity: 0.95, weight: 2 })
-      .bindTooltip(`${name}: transport emission factor`, { direction: "top" })
-      .addTo(transport);
-  });
-  transport.addTo(group);
-
-  if (includeLabels) {
-    L.control.layers(null, {
-      "Primary roads": majorRoads,
-      "Secondary roads": secondaryRoads,
-      "Industrial zones": industry,
-      "Transport infrastructure": transport
-    }, { collapsed: true, position: "topright" }).addTo(map);
-  }
-  return { group, majorRoads, secondaryRoads, industry, transport };
-}
-
-function addVulnerabilityLayers(map, includeControl = true) {
-  const group = L.layerGroup().addTo(map);
-  const configs = [
-    ["hospitals", demoData.hospitals, "#d83b39", 10, "Hospital: very high vulnerability"],
-    ["schools", demoData.schools, "#e6a646", 8, "School: high child vulnerability"],
-    ["residential", demoData.residential, "#31a7aa", 11, "Residential area: population exposure"],
-    ["parks", demoData.parks, "#55a875", 16, "Park: lower vulnerability buffer"]
-  ];
-  const layers = {};
-  configs.forEach(([key, points, color, radius, label]) => {
-    const layer = L.layerGroup();
-    points.forEach(([lat, lng, name]) => {
-      L.circle([lat, lng], { radius: radius * 95, color, fillColor: color, fillOpacity: key === "parks" ? 0.12 : 0.25, weight: 1.5 })
-        .bindTooltip(`<b>${name}</b><br>${label}`, { direction: "top" })
-        .addTo(layer);
+  let roads = null;
+  if (includeRoads) {
+    roads = await loadProjectedGeoJson(dataPaths.roadsSub2, {
+      style: {
+        color: "#e9a84f",
+        weight: 1.8,
+        opacity: 0.72,
+        lineCap: "round"
+      },
+      onEachFeature: (feature, layer) => bindTooltip(
+        layer,
+        feature,
+        "Distribution road",
+        "Primary, secondary or tertiary distribution road. Weight: 25 percent."
+      )
     });
-    layer.addTo(group);
-    layers[key] = layer;
+  }
+
+  const industrySub1 = await loadProjectedGeoJson(dataPaths.industrySub1, {
+    style: {
+      color: "#c93e3b",
+      fillColor: "#e8534f",
+      fillOpacity: 0.42,
+      weight: 1.1,
+      opacity: 0.78
+    },
+    onEachFeature: (feature, layer) => bindTooltip(
+      layer,
+      feature,
+      "Industrial zone",
+      "Heavy industrial source layer. Weight: 35 percent."
+    )
   });
+
+  let industrySub2 = null;
+  if (includeParcels) {
+    industrySub2 = await loadProjectedGeoJson(dataPaths.industrySub2, {
+      style: {
+        color: "#8d2e2b",
+        fillColor: "#ef8b50",
+        fillOpacity: 0.18,
+        weight: 0.4,
+        opacity: 0.42
+      },
+      onEachFeature: (feature, layer) => bindTooltip(
+        layer,
+        feature,
+        "Industrial parcel",
+        "Additional industrial land-use polygon."
+      )
+    });
+  }
+
+  highwayBuffer.addTo(group);
+  if (roads) roads.addTo(group);
+  highways.addTo(group);
+  if (industrySub2) industrySub2.addTo(group);
+  industrySub1.addTo(group);
+
+  if (includeControl) {
+    const overlays = {
+      "Highways - 40%": highways,
+      "Industrial zones - 35%": industrySub1,
+      "Road pressure buffer": highwayBuffer
+    };
+    if (roads) overlays["Roads - 25%"] = roads;
+    if (industrySub2) overlays["Industrial parcels"] = industrySub2;
+    L.control.layers(null, overlays, { collapsed: true, position: "topright" }).addTo(map);
+  }
+
+  return { group, highways, roads, industrySub1, industrySub2, highwayBuffer };
+}
+
+async function addImpactLayers(map, includeControl = true, visible = true) {
+  const group = L.layerGroup();
+  if (visible) group.addTo(map);
+
+  const hospitals = await loadProjectedGeoJson(dataPaths.hospitals, createPointLayer(
+    "#d83b39",
+    8,
+    "Hospital",
+    "Critical receptor: patients and elderly populations."
+  ));
+
+  const schools = await loadProjectedGeoJson(dataPaths.schools, createPointLayer(
+    "#f2ae55",
+    7,
+    "School",
+    "Critical receptor: children and school communities."
+  ));
+
+  const sensorBuffers = await loadProjectedGeoJson(dataPaths.sensorBuffers, {
+    style: {
+      color: "#64c6c4",
+      fillColor: "#64c6c4",
+      fillOpacity: 0.11,
+      weight: 1.1,
+      opacity: 0.68
+    },
+    onEachFeature: (feature, layer) => bindTooltip(
+      layer,
+      feature,
+      "500 m sensor coverage buffer",
+      "Engineering coverage zone used in the final deployment plan."
+    )
+  });
+
+  hospitals.addTo(group);
+  schools.addTo(group);
+  sensorBuffers.addTo(group);
+
   if (includeControl) {
     L.control.layers(null, {
-      Hospitals: layers.hospitals,
-      Schools: layers.schools,
-      Residential: layers.residential,
-      "Park buffers": layers.parks
+      Hospitals: hospitals,
+      Schools: schools,
+      "500 m sensor coverage": sensorBuffers
     }, { collapsed: true, position: "topright" }).addTo(map);
   }
-  return { group, ...layers };
+
+  return { group, hospitals, schools, sensorBuffers };
 }
 
-function addHotspots(map, type, opacity = 0.3) {
-  const palettes = {
-    causal: ["#f2b04f", "#e8534f"],
-    impact: ["#ed9853", "#d83b39"],
-    final: ["#f2ae55", "#d83b39"]
-  };
+async function addSensorLayers(map, includeControl = true, visible = true) {
   const group = L.layerGroup();
-  demoData.hotspots[type].forEach(([lat, lng, radius], index) => {
-    const color = palettes[type][index % 2];
-    L.circle([lat, lng], { radius, stroke: false, fillColor: color, fillOpacity: opacity * 0.32 }).addTo(group);
-    L.circle([lat, lng], { radius: radius * 0.55, stroke: false, fillColor: color, fillOpacity: opacity * 0.55 })
-      .bindTooltip(`${type === "final" ? "High sensor suitability" : type === "causal" ? "Elevated source pressure" : "Elevated human vulnerability"}`, { sticky: true })
-      .addTo(group);
+  if (visible) group.addTo(map);
+
+  const sensorBuffers = await loadProjectedGeoJson(dataPaths.sensorBuffers, {
+    style: {
+      color: "#8bc99d",
+      fillColor: "#8bc99d",
+      fillOpacity: 0.13,
+      weight: 1.2,
+      opacity: 0.75
+    },
+    onEachFeature: (feature, layer) => bindTooltip(
+      layer,
+      feature,
+      "500 m sensor buffer",
+      "Coverage radius recommended by the report for micro-sensor monitoring."
+    )
   });
-  group.addTo(map);
-  return group;
+
+  const sensors = await loadProjectedGeoJson(dataPaths.sensors, createPointLayer(
+    "#d83b39",
+    7,
+    "Candidate IoT sensor",
+    "Optimized sensor location selected from high-priority suitability cells."
+  ));
+
+  sensorBuffers.addTo(group);
+  sensors.addTo(group);
+
+  if (includeControl) {
+    L.control.layers(null, {
+      "Candidate sensors": sensors,
+      "500 m coverage buffers": sensorBuffers
+    }, { collapsed: true, position: "topright" }).addTo(map);
+  }
+
+  return { group, sensors, sensorBuffers };
 }
 
-function buildMaps() {
+function setStatus(selector, text) {
+  document.querySelectorAll(selector).forEach((element) => {
+    element.textContent = text;
+  });
+}
+
+function rasterPixelColor(values) {
+  if (!values || values.length === 0) return null;
+  const [r, g, b, a = 255] = values;
+  if ([r, g, b].some((value) => value === undefined || value === null || Number.isNaN(value))) return null;
+  if (a === 0) return null;
+  return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, a / 255))})`;
+}
+
+function setFinalRasterVisible(visible) {
+  const raster = layerRegistry.finalRaster;
+  if (!raster) return;
+  const container = raster.getContainer?.() || raster._container;
+  if (container) {
+    container.style.display = visible ? "" : "none";
+    container.style.opacity = visible ? "0.72" : "0";
+  } else if (typeof raster.setOpacity === "function") {
+    raster.setOpacity(visible ? 0.72 : 0);
+  }
+}
+
+async function loadFinalRaster() {
+  if (typeof parseGeoraster === "undefined" || typeof GeoRasterLayer === "undefined") {
+    setStatus('[data-raster="final"]', "GeoTIFF plugin unavailable");
+    return null;
+  }
+
+  try {
+    const response = await fetch(rasterConfig.final.file, { cache: "no-store" });
+    if (!response.ok) throw new Error("Raster not found");
+    const georaster = await parseGeoraster(await response.arrayBuffer());
+    const createLayer = () => new GeoRasterLayer({
+      georaster,
+      opacity: 0.72,
+      resolution: 192,
+      pixelValuesToColorFn: rasterPixelColor
+    });
+
+    const resultLayer = createLayer();
+    layerRegistry.finalRaster = resultLayer;
+    resultLayer.addTo(maps.result);
+    setTimeout(() => setFinalRasterVisible(resultActiveLayer === "final"), 0);
+    setStatus('[data-raster="final"]', "Final GeoTIFF loaded");
+    return resultLayer;
+  } catch (error) {
+    setStatus('[data-raster="final"]', "Final GeoTIFF not loaded");
+    document.querySelectorAll('[data-raster="final"]').forEach((element) => {
+      element.title = `${rasterConfig.final.file} could not be displayed. Sensor points and buffers are still shown.`;
+    });
+    return null;
+  }
+}
+
+function fitToStudyArea(map) {
+  if (studyBounds?.isValid()) {
+    map.fitBounds(studyBounds, { padding: [26, 26], animate: false });
+  } else {
+    map.setView(KLANG_CENTER, KLANG_ZOOM);
+  }
+}
+
+function clearResultMode() {
+  if (layerRegistry.resultMode) {
+    layerRegistry.resultMode.forEach((layer) => {
+      if (maps.result.hasLayer(layer)) maps.result.removeLayer(layer);
+    });
+  }
+  setFinalRasterVisible(false);
+  layerRegistry.resultMode = [];
+}
+
+async function showResultLayer(type) {
+  resultActiveLayer = type;
+  clearResultMode();
+
+  if (type === "causal") {
+    const causal = await addCausalLayers(maps.result, false, true, { includeParcels: false, includeRoads: false });
+    layerRegistry.resultMode = [causal.group];
+  } else if (type === "impact") {
+    const impact = await addImpactLayers(maps.result, false);
+    layerRegistry.resultMode = [impact.group];
+  } else {
+    if (!layerRegistry.resultFinalGroup) {
+      const sensors = await addSensorLayers(maps.result, false);
+      layerRegistry.resultFinalGroup = sensors.group;
+    }
+    if (!maps.result.hasLayer(layerRegistry.resultFinalGroup)) {
+      layerRegistry.resultFinalGroup.addTo(maps.result);
+    }
+    layerRegistry.resultMode = [layerRegistry.resultFinalGroup];
+    setFinalRasterVisible(true);
+  }
+}
+
+async function buildMaps() {
   maps.study = createBaseMap("study-map", { zoom: 10 });
-  addBoundary(maps.study, true);
-  L.marker(KLANG_CENTER).bindTooltip("Klang urban centre", { permanent: false }).addTo(maps.study);
-  maps.study.fitBounds([[2.91, 101.27], [3.17, 101.59]], { padding: [28, 28] });
+  const boundary = await addBoundary(maps.study, true);
+  L.marker(KLANG_CENTER)
+    .bindTooltip("Klang urban centre", { permanent: false })
+    .addTo(maps.study);
+  fitToStudyArea(maps.study);
 
   maps.causal = createBaseMap("causal-map");
-  addBoundary(maps.causal);
-  layerRegistry.causal = addCausalLayers(maps.causal);
-  layerRegistry.causal.hotspots = addHotspots(maps.causal, "causal", 0.55);
+  await addBoundary(maps.causal);
+  layerRegistry.causal = await addCausalLayers(maps.causal);
+  fitToStudyArea(maps.causal);
+  setStatus('[data-raster="causal"]', "EPSG:3380 vectors loaded");
 
   maps.impact = createBaseMap("impact-map");
-  addBoundary(maps.impact);
-  layerRegistry.impact = addVulnerabilityLayers(maps.impact);
-  layerRegistry.impact.hotspots = addHotspots(maps.impact, "impact", 0.5);
+  await addBoundary(maps.impact);
+  layerRegistry.impact = await addImpactLayers(maps.impact);
+  fitToStudyArea(maps.impact);
+  setStatus('[data-raster="impact"]', "EPSG:3380 vectors loaded");
 
   maps.result = createBaseMap("result-map");
-  addBoundary(maps.result);
-  showResultDemoLayer("final");
+  await addBoundary(maps.result);
+  layerRegistry.resultSensors = await addSensorLayers(maps.result, true);
+  layerRegistry.resultFinalGroup = layerRegistry.resultSensors.group;
+  layerRegistry.resultMode = [layerRegistry.resultSensors.group];
+  fitToStudyArea(maps.result);
+
+  await loadFinalRaster();
 
   document.querySelectorAll(".map-reset").forEach((button) => {
     button.addEventListener("click", () => {
       const key = button.dataset.map.replace("-map", "");
       const map = maps[key];
-      if (map) map.setView(KLANG_CENTER, key === "study" ? 10 : KLANG_ZOOM, { animate: true });
+      if (map) fitToStudyArea(map);
     });
   });
 
-  setTimeout(() => Object.values(maps).forEach((map) => map.invalidateSize()), 300);
-}
-
-function showResultDemoLayer(type) {
-  const map = maps.result;
-  if (layerRegistry.resultDemo) {
-    layerRegistry.resultDemo.forEach((layer) => {
-      if (map.hasLayer(layer)) map.removeLayer(layer);
-    });
-  }
-  if (type === "causal") {
-    layerRegistry.resultDemo = [addHotspots(map, "causal", 0.65), addCausalLayers(map, false).group];
-  } else if (type === "impact") {
-    layerRegistry.resultDemo = [addHotspots(map, "impact", 0.6), addVulnerabilityLayers(map, false).group];
-  } else {
-    const finalGroup = addHotspots(map, "final", 0.85);
-    demoData.hotspots.final.forEach(([lat, lng], index) => {
-      L.circleMarker([lat, lng], { radius: 7, color: "#fff", fillColor: "#d83b39", fillOpacity: 1, weight: 2 })
-        .bindTooltip(`<b>Candidate sensor ${index + 1}</b><br>High combined suitability`, { direction: "top" })
-        .addTo(finalGroup);
-    });
-    layerRegistry.resultDemo = [finalGroup];
-  }
-}
-
-function interpolateColor(value, min, max, colors) {
-  const ratio = max === min ? 0.5 : Math.max(0, Math.min(1, (value - min) / (max - min)));
-  if (ratio < 0.5) return colors[0];
-  if (ratio < 0.78) return colors[1];
-  return colors[2];
-}
-
-async function loadRaster(type) {
-  if (typeof parseGeoraster === "undefined" || typeof GeoRasterLayer === "undefined") return;
-  const config = rasterConfig[type];
-  try {
-    const response = await fetch(config.file, { cache: "no-store" });
-    if (!response.ok) throw new Error("Raster not found");
-    const georaster = await parseGeoraster(await response.arrayBuffer());
-    const min = georaster.mins[0];
-    const max = georaster.maxs[0];
-    const createLayer = () => new GeoRasterLayer({
-        georaster,
-        opacity: 0.72,
-        resolution: 192,
-        pixelValuesToColorFn: (values) => {
-          const value = values[0];
-          if (value === undefined || value === null || Number.isNaN(value) || value === georaster.noDataValue) return null;
-          return interpolateColor(value, min, max, config.colors);
-        }
-      });
-    const resultLayer = createLayer();
-    layerRegistry[`${type}ResultRaster`] = resultLayer;
-    if (type === "causal" || type === "impact") {
-      const detailLayer = createLayer();
-      layerRegistry[`${type}Raster`] = detailLayer;
-      detailLayer.addTo(type === "causal" ? maps.causal : maps.impact);
-    }
-    if (resultActiveLayer === type) resultLayer.addTo(maps.result);
-    document.querySelectorAll(`[data-raster="${type}"]`).forEach((el) => { el.textContent = "GeoTIFF loaded"; });
-  } catch (error) {
-    document.querySelectorAll(`[data-raster="${type}"]`).forEach((el) => { el.title = `Add ${config.file} to the project root to replace the illustrative surface.`; });
-  }
+  setTimeout(() => Object.values(maps).forEach((map) => map.invalidateSize()), 350);
+  return boundary;
 }
 
 function setupResultControls() {
   document.querySelectorAll("[data-result-layer]").forEach((button) => {
-    button.addEventListener("click", () => {
-      resultActiveLayer = button.dataset.resultLayer;
+    button.addEventListener("click", async () => {
       document.querySelectorAll("[data-result-layer]").forEach((item) => item.classList.toggle("active", item === button));
-      ["causal", "impact", "final"].forEach((type) => {
-        const raster = layerRegistry[`${type}ResultRaster`];
-        if (raster && maps.result.hasLayer(raster)) maps.result.removeLayer(raster);
-      });
-      showResultDemoLayer(resultActiveLayer);
-      const raster = layerRegistry[`${resultActiveLayer}ResultRaster`];
-      if (raster) raster.addTo(maps.result);
+      await showResultLayer(button.dataset.resultLayer);
     });
   });
 }
@@ -285,11 +548,12 @@ function setupResultControls() {
 function setupFactorFocus() {
   document.querySelectorAll("[data-focus-layer]").forEach((button) => {
     button.addEventListener("click", () => {
-      const layer = layerRegistry.causal[button.dataset.focusLayer];
+      const layer = layerRegistry.causal?.[button.dataset.focusLayer];
+      if (!layer) return;
       if (!maps.causal.hasLayer(layer)) layer.addTo(maps.causal);
       document.querySelectorAll("[data-focus-layer]").forEach((item) => item.classList.toggle("active", item === button));
       const bounds = layer.getBounds ? layer.getBounds() : null;
-      if (bounds?.isValid()) maps.causal.fitBounds(bounds, { padding: [40, 40], maxZoom: 12, animate: true });
+      if (bounds?.isValid()) maps.causal.fitBounds(bounds, { padding: [34, 34], maxZoom: 14, animate: true });
     });
   });
 }
@@ -347,12 +611,21 @@ function setupReveal() {
   document.querySelectorAll(".reveal").forEach((element) => observer.observe(element));
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  defineProjection();
   setupTheme();
   setupNavigation();
   setupReveal();
-  buildMaps();
   setupResultControls();
   setupFactorFocus();
-  Object.keys(rasterConfig).forEach(loadRaster);
+
+  try {
+    await buildMaps();
+  } catch (error) {
+    console.error(error);
+    document.querySelectorAll(".raster-status").forEach((element) => {
+      element.textContent = "Data load error";
+      element.title = error.message;
+    });
+  }
 });
