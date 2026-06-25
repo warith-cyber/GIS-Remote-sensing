@@ -12,17 +12,24 @@ node server.cjs
 
 Open `http://localhost:8000`.
 
-## GIS raster overlays
+## GIS data
 
-Place the exported rasters in the project root with these exact filenames:
+The StoryMap now reads the project data from the `map` folder:
 
-- `causal_raster.tif`
-- `impact_raster.tif`
-- `final_suitability.tif`
+- `map/Geojson/klang base.geojson`
+- `map/Geojson/roads sub1.geojson`
+- `map/Geojson/roads_sub2.geojson`
+- `map/Geojson/Industrial sub1.geojson`
+- `map/Geojson/Industrial sub2.geojson`
+- `map/Geojson/hopital.geojson`
+- `map/Geojson/School.geojson`
+- `map/Geojson/IOT Sensor.geojson`
+- `map/Geojson/IOT sensor buffered.geojson`
+- `map/Geotiff/Peta_Akhir_Scenario_2_Betul.tif`
 
-When a file is available, its panel status changes from **Illustrative surface** to **GeoTIFF loaded**. If the files are absent, the maps use interactive demonstration layers so the story remains fully functional.
+The source layers remain in EPSG:3380 (GDM2000 / Selangor Grid). The browser uses `proj4` to project the GeoJSON coordinates for Leaflet display without changing the original GIS files.
 
-The browser must be able to read valid georeferencing from each GeoTIFF. Use a common CRS, extent, origin and resolution for correct visual comparison.
+The final suitability GeoTIFF is loaded as the main result surface. The causal and impact panels use the EPSG:3380 GeoJSON layers from the report workflow.
 
 ## Files
 
