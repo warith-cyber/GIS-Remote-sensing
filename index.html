@@ -212,9 +212,15 @@
 
       <section class="factor-section impact story-section" id="impact" data-chapter="06" aria-labelledby="impact-title">
         <div class="factor-map-wrap reveal">
-          <div class="map-toolbar"><span class="live-dot orange">Impact layer</span><span class="raster-status" data-raster="impact">Loading EPSG:3380 data</span></div>
+          <div class="map-toolbar">
+            <span class="live-dot orange">Impact layer</span>
+            <div class="toolbar-actions">
+              <button class="layer-toggle" id="impact-road-toggle" type="button" aria-pressed="false" disabled>Roads off</button>
+              <span class="raster-status" data-raster="impact">Loading EPSG:3380 data</span>
+            </div>
+          </div>
           <div class="map large-map" id="impact-map" aria-label="Interactive social vulnerability map"></div>
-          <div class="map-legend impact-legend"><span class="dot hospital"></span>Hospital <span class="dot school"></span>School <span class="dot buffer"></span>500 m sensor buffer</div>
+          <div class="map-legend impact-legend"><span class="dot hospital"></span>Hospital <span class="dot school"></span>School <span class="dot buffer"></span>500 m sensor buffer <span class="dot road-reference"></span>Road reference</div>
         </div>
         <div class="factor-copy reveal">
           <p class="section-label">06 / Impact surface</p>
