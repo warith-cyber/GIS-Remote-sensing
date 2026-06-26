@@ -117,6 +117,10 @@ h1 { max-width: 920px; margin: 28px 0 24px; color: #f5f8f5; font-size: clamp(2.8
 .map { z-index: 1; width: 100%; height: 100%; min-height: 550px; background: #bfc9c3; }
 .map-toolbar { position: absolute; z-index: 500; top: 18px; left: 18px; right: 18px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
 .live-dot, .raster-status, .map-reset { height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 11px; background: color-mix(in srgb, var(--bg) 90%, transparent); border: 1px solid var(--line); backdrop-filter: blur(10px); border-radius: 3px; color: var(--text); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.toolbar-actions { display: flex; align-items: center; gap: 8px; pointer-events: auto; }
+.layer-toggle { height: 34px; padding: 0 11px; border: 1px solid var(--line); border-radius: 3px; background: color-mix(in srgb, var(--bg) 90%, transparent); color: var(--text); backdrop-filter: blur(10px); cursor: pointer; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.layer-toggle:hover, .layer-toggle[aria-pressed="true"] { border-color: rgba(100,198,196,.7); background: rgba(33, 72, 76, .92); }
+.layer-toggle:disabled { cursor: wait; opacity: .55; }
 .live-dot::before { content: ""; width: 6px; height: 6px; background: var(--green); border-radius: 50%; box-shadow: 0 0 0 3px rgba(139,201,157,.15); }
 .live-dot.red::before { background: var(--red); box-shadow: 0 0 0 3px rgba(232,83,79,.16); }
 .live-dot.orange::before { background: var(--orange); box-shadow: 0 0 0 3px rgba(239,139,80,.16); }
@@ -191,10 +195,13 @@ h1 { max-width: 920px; margin: 28px 0 24px; color: #f5f8f5; font-size: clamp(2.8
 .dot.home { background: var(--cyan); }
 .dot.park { background: var(--green); }
 .dot.buffer { background: var(--cyan); box-shadow: 0 0 0 3px rgba(100,198,196,.18); }
+.dot.road-reference { width: 18px; height: 3px; border-radius: 0; background: #3f6f77; }
 .vulnerability-scale { margin-top: 45px; }
 .vulnerability-scale > div { display: grid; grid-template-columns: 40px 90px 1fr; align-items: center; gap: 10px; padding: 16px 0; border-bottom: 1px solid var(--line); }
 .vulnerability-scale span { display: grid; place-items: center; width: 32px; height: 32px; color: #19221e; background: var(--orange); border-radius: 50%; font-weight: 700; font-size: 11px; }
-.vulnerability-scale div:last-child span { background: var(--green); }
+.vulnerability-scale > div:nth-child(1) span { background: var(--red); color: #fff; }
+.vulnerability-scale > div:nth-child(2) span { background: var(--amber); }
+.vulnerability-scale > div:nth-child(3) span { background: var(--green); }
 .vulnerability-scale b { font-size: 12px; }
 .vulnerability-scale p { margin: 0; color: var(--muted); font-size: 11px; }
 

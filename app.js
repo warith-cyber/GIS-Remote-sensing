@@ -356,6 +356,44 @@ async function addImpactLayers(map, includeControl = true, visible = true) {
   return { group, hospitals, schools, sensorBuffers };
 }
 
+async function addImpactRoadOverlay(map) {
+  const group = L.layerGroup();
+
+  const roadReference = await loadProjectedGeoJson(dataPaths.roadsSub2, {
+    style: {
+      color: "#3f6f77",
+      weight: 1.2,
+      opacity: 0.58,
+      lineCap: "round"
+    },
+    onEachFeature: (feature, layer) => bindTooltip(
+      layer,
+      feature,
+      "Road reference",
+      "Distribution road context for nearby school and hospital exposure."
+    )
+  });
+
+  const highwayReference = await loadProjectedGeoJson(dataPaths.roadsSub1, {
+    style: {
+      color: "#183f47",
+      weight: 2.6,
+      opacity: 0.82,
+      lineCap: "round"
+    },
+    onEachFeature: (feature, layer) => bindTooltip(
+      layer,
+      feature,
+      "Highway reference",
+      "Major road context for vulnerable receptor exposure."
+    )
+  });
+
+  roadReference.addTo(group);
+  highwayReference.addTo(group);
+  return group;
+}
+
 async function addSensorLayers(map, includeControl = true, visible = true) {
   const group = L.layerGroup();
   if (visible) group.addTo(map);
@@ -512,6 +550,8 @@ async function buildMaps() {
   maps.impact = createBaseMap("impact-map");
   await addBoundary(maps.impact);
   layerRegistry.impact = await addImpactLayers(maps.impact);
+  layerRegistry.impactRoads = await addImpactRoadOverlay(maps.impact);
+  setupImpactRoadToggle();
   fitToStudyArea(maps.impact);
   setStatus('[data-raster="impact"]', "EPSG:3380 vectors loaded");
 
@@ -555,6 +595,26 @@ function setupFactorFocus() {
       const bounds = layer.getBounds ? layer.getBounds() : null;
       if (bounds?.isValid()) maps.causal.fitBounds(bounds, { padding: [34, 34], maxZoom: 14, animate: true });
     });
+  });
+}
+
+function setupImpactRoadToggle() {
+  const button = document.getElementById("impact-road-toggle");
+  const roadLayer = layerRegistry.impactRoads;
+  if (!button || !roadLayer || button.dataset.ready === "true") return;
+
+  button.disabled = false;
+  button.dataset.ready = "true";
+  button.addEventListener("click", () => {
+    const isVisible = maps.impact.hasLayer(roadLayer);
+    if (isVisible) {
+      maps.impact.removeLayer(roadLayer);
+    } else {
+      roadLayer.addTo(maps.impact);
+    }
+    const nextVisible = !isVisible;
+    button.textContent = nextVisible ? "Roads on" : "Roads off";
+    button.setAttribute("aria-pressed", String(nextVisible));
   });
 }
 
