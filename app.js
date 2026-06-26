@@ -206,9 +206,9 @@ async function addCausalLayers(map, includeControl = true, visible = true, confi
 
   const highwayBuffer = await loadProjectedGeoJson(dataPaths.roadsSub1, {
     style: {
-      color: "#d83b39",
-      weight: 13,
-      opacity: 0.16,
+      color: "#b65a55",
+      weight: 9,
+      opacity: 0.08,
       lineCap: "round"
     },
     onEachFeature: (feature, layer) => bindTooltip(
@@ -221,9 +221,9 @@ async function addCausalLayers(map, includeControl = true, visible = true, confi
 
   const highways = await loadProjectedGeoJson(dataPaths.roadsSub1, {
     style: {
-      color: "#d83b39",
-      weight: 3.2,
-      opacity: 0.86,
+      color: "#b65a55",
+      weight: 2.2,
+      opacity: 0.58,
       lineCap: "round"
     },
     onEachFeature: (feature, layer) => bindTooltip(
@@ -238,9 +238,9 @@ async function addCausalLayers(map, includeControl = true, visible = true, confi
   if (includeRoads) {
     roads = await loadProjectedGeoJson(dataPaths.roadsSub2, {
       style: {
-        color: "#e9a84f",
-        weight: 1.8,
-        opacity: 0.72,
+        color: "#c47772",
+        weight: 1.1,
+        opacity: 0.44,
         lineCap: "round"
       },
       onEachFeature: (feature, layer) => bindTooltip(
@@ -252,7 +252,7 @@ async function addCausalLayers(map, includeControl = true, visible = true, confi
     });
   }
 
-  const industrySub1 = await loadProjectedGeoJson(dataPaths.industrySub1, {
+  const heavyIndustry = await loadProjectedGeoJson(dataPaths.industrySub1, {
     style: {
       color: "#c93e3b",
       fillColor: "#e8534f",
@@ -263,26 +263,26 @@ async function addCausalLayers(map, includeControl = true, visible = true, confi
     onEachFeature: (feature, layer) => bindTooltip(
       layer,
       feature,
-      "Industrial zone",
-      "Heavy industrial source layer. Weight: 35 percent."
+      "Heavy industry",
+      "Industrial sub1: heavy industrial source layer within the report's industrial causal factor."
     )
   });
 
-  let industrySub2 = null;
+  let lightIndustry = null;
   if (includeParcels) {
-    industrySub2 = await loadProjectedGeoJson(dataPaths.industrySub2, {
+    lightIndustry = await loadProjectedGeoJson(dataPaths.industrySub2, {
       style: {
-        color: "#8d2e2b",
-        fillColor: "#ef8b50",
-        fillOpacity: 0.18,
+        color: "#b8742a",
+        fillColor: "#f3ba63",
+        fillOpacity: 0.2,
         weight: 0.4,
         opacity: 0.42
       },
       onEachFeature: (feature, layer) => bindTooltip(
         layer,
         feature,
-        "Industrial parcel",
-        "Additional industrial land-use polygon."
+        "Light industry",
+        "Industrial sub2: light industrial land-use polygon within the report's industrial causal factor."
       )
     });
   }
@@ -290,21 +290,21 @@ async function addCausalLayers(map, includeControl = true, visible = true, confi
   highwayBuffer.addTo(group);
   if (roads) roads.addTo(group);
   highways.addTo(group);
-  if (industrySub2) industrySub2.addTo(group);
-  industrySub1.addTo(group);
+  if (lightIndustry) lightIndustry.addTo(group);
+  heavyIndustry.addTo(group);
 
   if (includeControl) {
     const overlays = {
       "Highways - 40%": highways,
-      "Industrial zones - 35%": industrySub1,
+      "Heavy industry - sub1": heavyIndustry,
       "Road pressure buffer": highwayBuffer
     };
     if (roads) overlays["Roads - 25%"] = roads;
-    if (industrySub2) overlays["Industrial parcels"] = industrySub2;
+    if (lightIndustry) overlays["Light industry - sub2"] = lightIndustry;
     L.control.layers(null, overlays, { collapsed: true, position: "topright" }).addTo(map);
   }
 
-  return { group, highways, roads, industrySub1, industrySub2, highwayBuffer };
+  return { group, highways, roads, industrySub1: heavyIndustry, industrySub2: lightIndustry, heavyIndustry, lightIndustry, highwayBuffer };
 }
 
 async function addImpactLayers(map, includeControl = true, visible = true) {
@@ -361,9 +361,9 @@ async function addImpactRoadOverlay(map) {
 
   const roadReference = await loadProjectedGeoJson(dataPaths.roadsSub2, {
     style: {
-      color: "#3f6f77",
-      weight: 1.2,
-      opacity: 0.58,
+      color: "#c47772",
+      weight: 0.9,
+      opacity: 0.34,
       lineCap: "round"
     },
     onEachFeature: (feature, layer) => bindTooltip(
@@ -376,9 +376,9 @@ async function addImpactRoadOverlay(map) {
 
   const highwayReference = await loadProjectedGeoJson(dataPaths.roadsSub1, {
     style: {
-      color: "#183f47",
-      weight: 2.6,
-      opacity: 0.82,
+      color: "#b65a55",
+      weight: 1.6,
+      opacity: 0.48,
       lineCap: "round"
     },
     onEachFeature: (feature, layer) => bindTooltip(

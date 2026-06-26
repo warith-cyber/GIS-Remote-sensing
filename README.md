@@ -19,8 +19,8 @@ The StoryMap now reads the project data from the `map` folder:
 - `map/Geojson/klang base.geojson`
 - `map/Geojson/roads sub1.geojson`
 - `map/Geojson/roads_sub2.geojson`
-- `map/Geojson/Industrial sub1.geojson`
-- `map/Geojson/Industrial sub2.geojson`
+- `map/Geojson/Industrial sub1.geojson` - heavy industry
+- `map/Geojson/Industrial sub2.geojson` - light industry
 - `map/Geojson/hopital.geojson`
 - `map/Geojson/School.geojson`
 - `map/Geojson/IOT Sensor.geojson`

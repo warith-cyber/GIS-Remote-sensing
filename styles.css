@@ -182,9 +182,11 @@ h1 { max-width: 920px; margin: 28px 0 24px; color: #f5f8f5; font-size: clamp(2.8
 .factor-item b, .factor-item small { display: block; }
 .factor-item b { font-size: 13px; }
 .factor-item small { color: var(--muted); font-size: 11px; margin-top: 2px; }
-.swatch { width: 16px; height: 4px; background: var(--red); }
-.swatch.road-secondary { background: var(--amber); height: 2px; }
+.swatch { width: 16px; height: 4px; background: #b65a55; }
+.swatch.road-secondary { background: #c47772; height: 2px; }
 .swatch.industry { height: 14px; background: rgba(232,83,79,.55); border: 1px solid var(--red); }
+.swatch.industry-heavy { height: 14px; background: rgba(232,83,79,.62); border: 1px solid var(--red); }
+.swatch.industry-light { height: 14px; background: rgba(243,186,99,.6); border: 1px solid var(--amber); }
 .swatch.transport { height: 10px; background: var(--cyan); border-radius: 50%; }
 .raster-status { margin-left: auto; }
 .map-legend { position: absolute; z-index: 500; bottom: 18px; left: 18px; right: 18px; width: fit-content; max-width: calc(100% - 36px); display: flex; align-items: center; gap: 10px; padding: 10px 13px; background: color-mix(in srgb, var(--bg) 91%, transparent); border: 1px solid var(--line); backdrop-filter: blur(10px); color: var(--muted); font-size: 10px; }
@@ -196,7 +198,7 @@ h1 { max-width: 920px; margin: 28px 0 24px; color: #f5f8f5; font-size: clamp(2.8
 .dot.home { background: var(--cyan); }
 .dot.park { background: var(--green); }
 .dot.buffer { background: var(--cyan); box-shadow: 0 0 0 3px rgba(100,198,196,.18); }
-.dot.road-reference { width: 18px; height: 3px; border-radius: 0; background: #3f6f77; }
+.dot.road-reference { width: 18px; height: 3px; border-radius: 0; background: #b65a55; opacity: .75; }
 .vulnerability-scale { margin-top: 45px; }
 .vulnerability-scale > div { display: grid; grid-template-columns: 40px 90px 1fr; align-items: center; gap: 10px; padding: 16px 0; border-bottom: 1px solid var(--line); }
 .vulnerability-scale span { display: grid; place-items: center; width: 32px; height: 32px; color: #19221e; background: var(--orange); border-radius: 50%; font-weight: 700; font-size: 11px; }
