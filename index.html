@@ -184,10 +184,101 @@
           <li class="reveal"><span>04</span><div><h3>Allocate</h3><p>Overlay causal and impact rasters, classify the result and place sensors on high-priority cells.</p></div></li>
         </ol>
 
-        <div class="formula-band reveal">
-          <div><span>Weighted Linear Combination</span><p>Causal pressure is built from highways, roads and industrial zones, then aligned with receptor vulnerability.</p></div>
-          <div class="formula"><i>Final Score</i><b>=</b><strong>alpha</strong><span>(Causal)</span><b>+</b><strong>beta</strong><span>(Impact)</span></div>
-          <div class="weight-demo" aria-label="Report model weights"><span>Causal weights</span><b>40% highways</b><b>35% industry</b><b>25% roads</b></div>
+        <div class="ahp-panel reveal">
+          <div class="ahp-heading">
+            <span>AHP weightage derivation</span>
+            <h3>Pairwise comparison matrix for Stage 1 causal indicators.</h3>
+            <p>The updated AHP matrix separates the causal model into four source layers: heavy industry, major roads, light industry and distribution roads.</p>
+          </div>
+          <div class="ahp-table-wrap" role="region" aria-label="AHP pairwise comparison matrix" tabindex="0">
+            <table class="ahp-table">
+              <thead>
+                <tr>
+                  <th>Causal indicator</th>
+                  <th>Industri 1</th>
+                  <th>Road Sub 1</th>
+                  <th>Industri 2</th>
+                  <th>Road Sub 2</th>
+                  <th>Row geometric mean</th>
+                  <th>Derived normalized weight</th>
+                  <th>Percentage weightage</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>Heavy industries<br><small>(industri1)</small></th>
+                  <td>1.00</td>
+                  <td>1.33</td>
+                  <td>2.00</td>
+                  <td>4.00</td>
+                  <td><span class="calc-line">root4(1.00 x 1.33 x 2.00 x 4.00)</span>1.805</td>
+                  <td><span class="calc-line">1.805 / 4.512</span>0.400</td>
+                  <td><strong>40%</strong></td>
+                </tr>
+                <tr>
+                  <th>Major roads and highways<br><small>(road sub1)</small></th>
+                  <td>0.75</td>
+                  <td>1.00</td>
+                  <td>1.50</td>
+                  <td>3.00</td>
+                  <td><span class="calc-line">root4(0.75 x 1.00 x 1.50 x 3.00)</span>1.354</td>
+                  <td><span class="calc-line">1.354 / 4.512</span>0.300</td>
+                  <td><strong>30%</strong></td>
+                </tr>
+                <tr>
+                  <th>Light/med industries<br><small>(industri2)</small></th>
+                  <td>0.50</td>
+                  <td>0.67</td>
+                  <td>1.00</td>
+                  <td>2.00</td>
+                  <td><span class="calc-line">root4(0.50 x 0.67 x 1.00 x 2.00)</span>0.903</td>
+                  <td><span class="calc-line">0.903 / 4.512</span>0.200</td>
+                  <td><strong>20%</strong></td>
+                </tr>
+                <tr>
+                  <th>Primary/secondary road<br><small>(road sub2)</small></th>
+                  <td>0.25</td>
+                  <td>0.33</td>
+                  <td>0.50</td>
+                  <td>1.00</td>
+                  <td><span class="calc-line">root4(0.25 x 0.33 x 0.50 x 1.00)</span>0.450</td>
+                  <td><span class="calc-line">0.450 / 4.512</span>0.100</td>
+                  <td><strong>10%</strong></td>
+                </tr>
+                <tr class="total-row">
+                  <th>Total</th>
+                  <td>2.50</td>
+                  <td>3.33</td>
+                  <td>5.00</td>
+                  <td>10.00</td>
+                  <td>4.512</td>
+                  <td>1.000</td>
+                  <td><strong>100%</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="consistency-strip" aria-label="AHP calculation totals">
+            <span>Criteria: 4</span>
+            <span>Sum GMi: 4.512</span>
+            <span>Sum Wj: 1.000</span>
+            <span>Total: 100%</span>
+          </div>
+        </div>
+
+        <div class="formula-band reveal" aria-label="Weighted Linear Combination formulas">
+          <article class="formula-card">
+            <span>Causal Master Index Equation (H<sub>Causal</sub>)</span>
+            <p>H<sub>Causal</sub> = (industri1 x 0.40) + (road sub1 x 0.30) + (industri2 x 0.20) + (road sub2 x 0.10)</p>
+          </article>
+          <article class="formula-card">
+            <span>Impact Master Index Equation (H<sub>Impact</sub>)</span>
+            <p>H<sub>Impact</sub> = (school x 0.50) + (hospital x 0.50)</p>
+          </article>
+          <article class="formula-card">
+            <span>Final Suitability Output</span>
+            <p>Final Suitability Output = (H<sub>Causal</sub> x 0.50) + (H<sub>Impact</sub> x 0.50)</p>
+          </article>
         </div>
       </section>
 
@@ -195,12 +286,12 @@
         <div class="factor-copy reveal">
           <p class="section-label">05 / Causal surface</p>
           <h2 id="causal-title">Where pollution pressure originates.</h2>
-          <p>The causal model follows the report weights: highways at 40 percent, industrial sources at 35 percent and distribution roads at 25 percent. The two industrial source layers are shown separately as heavy and light industry.</p>
+          <p>The causal model follows the updated AHP weights: heavy industry at 40 percent, major roads and highways at 30 percent, light industry at 20 percent and distribution roads at 10 percent.</p>
           <div class="factor-list">
-            <button class="factor-item active" type="button" data-focus-layer="highways" data-map-target="causal-map"><span class="swatch road"></span><span><b>Highways</b><small>Major logistics corridors - 40% causal weight</small></span></button>
-            <button class="factor-item" type="button" data-focus-layer="roads" data-map-target="causal-map"><span class="swatch road-secondary"></span><span><b>Distribution roads</b><small>Primary, secondary and tertiary roads - 25% causal weight</small></span></button>
-            <button class="factor-item" type="button" data-focus-layer="industrySub1" data-map-target="causal-map"><span class="swatch industry-heavy"></span><span><b>Heavy industry</b><small>Industrial sub1 - industrial causal factor</small></span></button>
-            <button class="factor-item" type="button" data-focus-layer="industrySub2" data-map-target="causal-map"><span class="swatch industry-light"></span><span><b>Light industry</b><small>Industrial sub2 - industrial causal factor</small></span></button>
+            <button class="factor-item active" type="button" data-focus-layer="industrySub1" data-map-target="causal-map"><span class="swatch industry-heavy"></span><span><b>Heavy industry</b><small>Industrial sub1 - 40% causal weight</small></span></button>
+            <button class="factor-item" type="button" data-focus-layer="highways" data-map-target="causal-map"><span class="swatch road"></span><span><b>Major roads and highways</b><small>Road sub1 - 30% causal weight</small></span></button>
+            <button class="factor-item" type="button" data-focus-layer="industrySub2" data-map-target="causal-map"><span class="swatch industry-light"></span><span><b>Light industry</b><small>Industrial sub2 - 20% causal weight</small></span></button>
+            <button class="factor-item" type="button" data-focus-layer="roads" data-map-target="causal-map"><span class="swatch road-secondary"></span><span><b>Distribution roads</b><small>Road sub2 - 10% causal weight</small></span></button>
           </div>
         </div>
         <div class="factor-map-wrap reveal">

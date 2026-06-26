@@ -31,6 +31,13 @@ The source layers remain in EPSG:3380 (GDM2000 / Selangor Grid). The browser use
 
 The final suitability GeoTIFF is loaded as the main result surface. The causal and impact panels use the EPSG:3380 GeoJSON layers from the report workflow.
 
+Current AHP causal weights shown in the StoryMap:
+
+- Heavy industry / industrial sub1: 40%
+- Major roads and highways / road sub1: 30%
+- Light industry / industrial sub2: 20%
+- Primary and secondary roads / road sub2: 10%
+
 ## Files
 
 - `index.html` - StoryMap structure and content

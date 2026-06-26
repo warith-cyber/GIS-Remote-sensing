@@ -215,7 +215,7 @@ async function addCausalLayers(map, includeControl = true, visible = true, confi
       layer,
       feature,
       "Major road or highway",
-      "High-weight causal layer: 40 percent in the report model."
+      "Road sub1 causal layer: 30 percent in the updated AHP model."
     )
   });
 
@@ -230,7 +230,7 @@ async function addCausalLayers(map, includeControl = true, visible = true, confi
       layer,
       feature,
       "Major road or highway",
-      "High traffic and logistics emission corridor."
+      "Road sub1: major logistics corridor. Updated AHP weight: 30 percent."
     )
   });
 
@@ -238,16 +238,16 @@ async function addCausalLayers(map, includeControl = true, visible = true, confi
   if (includeRoads) {
     roads = await loadProjectedGeoJson(dataPaths.roadsSub2, {
       style: {
-        color: "#c47772",
+        color: "#f3ba63",
         weight: 1.1,
         opacity: 0.44,
         lineCap: "round"
       },
       onEachFeature: (feature, layer) => bindTooltip(
-        layer,
-        feature,
-        "Distribution road",
-        "Primary, secondary or tertiary distribution road. Weight: 25 percent."
+      layer,
+      feature,
+      "Distribution road",
+      "Road sub2: primary, secondary or tertiary distribution road. Updated AHP weight: 10 percent."
       )
     });
   }
@@ -264,7 +264,7 @@ async function addCausalLayers(map, includeControl = true, visible = true, confi
       layer,
       feature,
       "Heavy industry",
-      "Industrial sub1: heavy industrial source layer within the report's industrial causal factor."
+      "Industrial sub1: heavy industrial source layer. Updated AHP weight: 40 percent."
     )
   });
 
@@ -282,7 +282,7 @@ async function addCausalLayers(map, includeControl = true, visible = true, confi
         layer,
         feature,
         "Light industry",
-        "Industrial sub2: light industrial land-use polygon within the report's industrial causal factor."
+        "Industrial sub2: light industrial land-use polygon. Updated AHP weight: 20 percent."
       )
     });
   }
@@ -295,12 +295,12 @@ async function addCausalLayers(map, includeControl = true, visible = true, confi
 
   if (includeControl) {
     const overlays = {
-      "Highways - 40%": highways,
-      "Heavy industry - sub1": heavyIndustry,
+      "Heavy industry - 40%": heavyIndustry,
+      "Road sub1 highways - 30%": highways,
       "Road pressure buffer": highwayBuffer
     };
-    if (roads) overlays["Roads - 25%"] = roads;
-    if (lightIndustry) overlays["Light industry - sub2"] = lightIndustry;
+    if (lightIndustry) overlays["Light industry - 20%"] = lightIndustry;
+    if (roads) overlays["Road sub2 roads - 10%"] = roads;
     L.control.layers(null, overlays, { collapsed: true, position: "topright" }).addTo(map);
   }
 
@@ -361,7 +361,7 @@ async function addImpactRoadOverlay(map) {
 
   const roadReference = await loadProjectedGeoJson(dataPaths.roadsSub2, {
     style: {
-      color: "#c47772",
+      color: "#f3ba63",
       weight: 0.9,
       opacity: 0.34,
       lineCap: "round"
@@ -370,7 +370,7 @@ async function addImpactRoadOverlay(map) {
       layer,
       feature,
       "Road reference",
-      "Distribution road context for nearby school and hospital exposure."
+      "Road sub2 context for nearby school and hospital exposure. Updated AHP weight: 10 percent."
     )
   });
 
@@ -385,7 +385,7 @@ async function addImpactRoadOverlay(map) {
       layer,
       feature,
       "Highway reference",
-      "Major road context for vulnerable receptor exposure."
+      "Road sub1 context for vulnerable receptor exposure. Updated AHP weight: 30 percent."
     )
   });
 
