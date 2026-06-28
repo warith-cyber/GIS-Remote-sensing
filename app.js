@@ -1,7 +1,35 @@
 const KLANG_CENTER = [3.0449, 101.4456];
 const KLANG_ZOOM = 11;
+const EXISTING_SENSOR_CENTER = [3.0557, 101.4931];
 const EPSG3380 =
   "+proj=cass +lat_0=3.68464905 +lon_0=101.389107913889 +x_0=-34836.161 +y_0=56464.049 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs";
+
+const existingSensorLocations = [
+  {
+    name: "Klang / Meru air sensor",
+    type: "air",
+    coords: [3.1084, 101.4768],
+    note: "Existing air sensor location visible near Klang in the OpenAQ-style current sensor view."
+  },
+  {
+    name: "Kuala Lumpur reference monitor west",
+    type: "reference",
+    coords: [3.1432, 101.6324],
+    note: "Existing air sensor location north-east of Klang."
+  },
+  {
+    name: "Kuala Lumpur reference monitor east",
+    type: "reference",
+    coords: [3.1505, 101.6939],
+    note: "Existing air sensor location in the Kuala Lumpur monitoring cluster."
+  },
+  {
+    name: "Putrajaya reference monitor",
+    type: "reference",
+    coords: [2.8995, 101.6361],
+    note: "Existing air sensor location south-east of the Klang Valley."
+  }
+];
 
 const dataPaths = {
   boundary: "map/Geojson/klang base.geojson",
@@ -154,6 +182,23 @@ function createPointLayer(color, radius, title, description) {
   };
 }
 
+function createExistingSensorMarker(site) {
+  const marker = L.circleMarker(site.coords, {
+    radius: 6,
+    color: "#ffffff",
+    weight: 1.6,
+    opacity: 0.96,
+    fillColor: "#6f55d9",
+    fillOpacity: 0.86
+  });
+
+  marker.bindTooltip(
+    `<b>${site.name}</b><br>Air sensor location<br>${site.note}`,
+    { sticky: true }
+  );
+  return marker;
+}
+
 function createBaseMap(id, options = {}) {
   const map = L.map(id, {
     center: KLANG_CENTER,
@@ -196,6 +241,24 @@ async function addBoundary(map, fill = false) {
   boundary.addTo(map);
   if (!studyBounds) studyBounds = boundary.getBounds();
   return boundary;
+}
+
+function addExistingSensorLocations(map) {
+  const airSensors = L.layerGroup();
+  const bounds = L.latLngBounds(existingSensorLocations.map((site) => site.coords));
+
+  existingSensorLocations.forEach((site) => {
+    const marker = createExistingSensorMarker(site);
+    marker.addTo(airSensors);
+  });
+
+  airSensors.addTo(map);
+
+  L.control.layers(null, {
+    "Air sensor locations": airSensors
+  }, { collapsed: true, position: "topright" }).addTo(map);
+
+  return { airSensors, bounds };
 }
 
 async function addCausalLayers(map, includeControl = true, visible = true, config = {}) {
@@ -500,6 +563,15 @@ function fitToStudyArea(map) {
   }
 }
 
+function fitExistingSensors(map) {
+  const bounds = layerRegistry.existingSensors?.bounds;
+  if (bounds?.isValid()) {
+    map.fitBounds(bounds, { padding: [42, 42], maxZoom: 11, animate: false });
+  } else {
+    map.setView(EXISTING_SENSOR_CENTER, KLANG_ZOOM);
+  }
+}
+
 function clearResultMode() {
   if (layerRegistry.resultMode) {
     layerRegistry.resultMode.forEach((layer) => {
@@ -541,6 +613,11 @@ async function buildMaps() {
     .addTo(maps.study);
   fitToStudyArea(maps.study);
 
+  maps.existing = createBaseMap("existing-map", { center: EXISTING_SENSOR_CENTER, zoom: 11 });
+  await addBoundary(maps.existing, true);
+  layerRegistry.existingSensors = addExistingSensorLocations(maps.existing);
+  fitExistingSensors(maps.existing);
+
   maps.causal = createBaseMap("causal-map");
   await addBoundary(maps.causal);
   layerRegistry.causal = await addCausalLayers(maps.causal);
@@ -568,7 +645,12 @@ async function buildMaps() {
     button.addEventListener("click", () => {
       const key = button.dataset.map.replace("-map", "");
       const map = maps[key];
-      if (map) fitToStudyArea(map);
+      if (!map) return;
+      if (key === "existing") {
+        fitExistingSensors(map);
+      } else {
+        fitToStudyArea(map);
+      }
     });
   });
 
